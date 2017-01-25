@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+  <head>
+    <title>UIT Chat</title>
+
+    <!-- JQUERY -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+    <!-- BOOTSTRAP -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/js/bootstrap-modal.min.js"></script>
+
+    <!-- Our CSS -->
+    <link rel='stylesheet' type='text/css' href='css/simple-sidebar.css'>
+    <link rel='stylesheet' type='text/css' href='css/style.css'>
+  </head>
+  <body>
+    <div id="messages-login-window">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-sm-12">
+            <h1>Login</h1>
+            <p>Please enter your name:</p>
+          </div>
+          <div class="col-sm-6 col-sm-offset-3">
+            <input type="text" id="login-name" class="form-control" val="">
+            <br>
+          </div>
+          <div class="col-sm-4 col-sm-offset-4">
+            <button id="login" class="btn btn-block btn-success">Go!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="messages-dashboard-window" style="display:none">
+
+      <!-- Sidebar -->
+      <div id="sidebar-wrapper" class="channels-window">
+        <ul class="sidebar-nav">
+          <li>
+            <h3>Logged users</h3>
+          </li>
+          <div id="channels-list" class="channels"></div>
+        </ul>
+      </div>
+
+      <div id="page-content-wrapper">
+
+        <div class="container-fluid">
+          <div class="row">
+
+            <!-- Message Window -->
+            <div class="col-md-12 message-window">
+
+              <!-- Messages Title Window -->
+              <div class="messages-title">
+                <a href="#menu-toggle" class="btn" id="menu-toggle"><i class="glyphicon glyphicon-menu-hamburger" aria-hidden="true"></i></a>
+                <h1 id="current-channel-title">Welcome to the Chat App!</h1>
+                <p id="current-channel-purpose" class="channel-purpose"><%= description %></p>
+                <p class="last-logged"><strong><em>Last Logged User:</em></strong> <span id="last-logged-user"></span></p>
+              </div>
+
+              <!-- Incoming Messages Window -->
+              <div class="messages-window">
+                <div id='messages-list' class="messages"></div>
+              </div>
+
+              <!-- New Message Input Window -->
+              <div class="new-message-window">
+                <input type='text' id='new-message-input' class="form-control input-lg" placeholder='Message'>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+
+      socket.on('show messages', function(messages) {
+        if (messages.length <= 0) {
+          $('#messages-list').html("<p>No messages.</p>")
+        }
+        else {
+          $('#messages-list').html("")
+          for (var i = 0; i < messages.length; i++) {
+            $('#messages-list').append("<p>"+messages[i]+"</p>");
+          }
+        }
+      });
+
+      socket.on('last logged', function(username) {
+        console.log(username);
+        $("#last-logged-user").html(username);
+      });
+
+      socket.on('logged users', function(usernames) {
+        $("#channels-list").html("");
+        for (i = 0; i < usernames.length; i++) {
+          $("#channels-list").append("<p>"+usernames[i]+"</p>");
+        }
+      });
+      
+      
+      $(document).ready(function() {
+        
+        /*  Messaging Events */
+        $('#new-message-input').keypress(function (e) {
+          if (e.keyCode == 13) {
+
+            if ($("#new-message-input").val() != '') {
+              socket.emit('send message', $("#new-message-input").val());
+              $("#new-message-input").val("");
+            }
+          }
+        });
+
+        $("#login").click(function() {
+          if ($("#login-name").val() != "") {
+            socket.emit('enter name', $("#login-name").val());
+            $("#messages-login-window").hide();
+            $("#messages-dashboard-window").show();
+          }
+        });
+
+        $("#menu-toggle").click(function(e) {
+          e.preventDefault();
+          $("#messages-dashboard-window").toggleClass("toggled");
+        });
+      });
+    </script>
+  </body>
+</html>
